@@ -28,14 +28,13 @@ class MailService {
       __dirname,
       "../html_templates/userCreated.html"
     );
-    let link = `${process.env.CLIENT_URL}/reset-password/${token}`;
-
+   
     const source = fs.readFileSync(filePath, "utf-8").toString();
     const template = handlebars.compile(source);
     const replacements = {
       name: to.email ,
       email: to.email,
-      link: link,
+      link: token,
     };
     const htmlToSend = template(replacements);
 
@@ -60,14 +59,14 @@ class MailService {
       __dirname,
       "../html_templates/requestResetPassword.html"
     );
-    let link = `${process.env.CLIENT_URL}/forgot-password/${token}`;
+
 
     const source = fs.readFileSync(filePath, "utf-8").toString();
     const template = handlebars.compile(source);
     const replacements = {
       name: to.email ,
       email: to.email,
-      link: link,
+      link: token,
     };
     const htmlToSend = template(replacements);
 

@@ -1,6 +1,6 @@
 // Init
 const router = require("express").Router();
-const { Register, Login, VerifyEmail ,ForgotPassword,ResetPassword} = require("../controllers/auth.js");
+const { Register, Login, VerifyEmail ,ForgotPassword,ResetPassword,GetsingleUser,GetallUsers} = require("../controllers/auth.js");
 const {
   registerUserValidator,
   loginUserValidator,
@@ -22,6 +22,9 @@ router.post("/verify", verifyemailValidator, isValidated, VerifyEmail);
 router.post("/forgot", forgotPasswordValidator, isValidated, ForgotPassword);
 // reset password
 router.post("/reset", resetPasswordValidator, isValidated, ResetPassword);
-
+// get single user
+router.get("/:id",  GetsingleUser);
+// get single user
+router.get("/",  GetallUsers);
 // Export
 module.exports = router;

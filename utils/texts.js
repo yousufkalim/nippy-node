@@ -22,7 +22,9 @@ module.exports = {
     loginSuccess: "Login Successfully",
     emailSent: "Email sent Successfully, please check your inbox",
     passwordUpdated: "Password Updated Successfully",
-    requestEmailVerificationSubject:"Verification Email"
+    requestEmailVerificationSubject:"Verification Email",
+    userFetched:"User Fetched Successfully"
+
 
   },
   STATUS: {

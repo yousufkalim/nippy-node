@@ -175,3 +175,36 @@ exports.ResetPassword = async (req, res) => {
   }
 }
 
+//Get single User
+
+exports.GetsingleUser = async (req, res) => {
+try {
+  let user = await User.findOne({ _id: req.params.id }); // Check if token exist
+    if (!user) return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
+    res
+      .status(200)
+      .send(response(STRINGS.TEXTS.userFetched, user));
+} catch (error) {
+  res.status(400).send(response(error.message));
+  
+}
+
+}
+
+//Get all Users
+
+exports.GetallUsers = async (req, res) => {
+  try {
+    console.log("hello")
+    let users = await User.find({}); // get all users
+     
+      res
+        .status(200)
+        .send(response(STRINGS.TEXTS.userFetched, users));
+  } catch (error) {
+    res.status(400).send(response(error.message));
+    
+  }
+  
+  }
+  
