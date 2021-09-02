@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
 const User = require("../models/user");
 const crypto = require("crypto");
+const MailService = require("../services/mail.service");
 
 const ENV = process.env;
 
@@ -22,8 +23,13 @@ exports.Register = async (req, res) => {
         data.password = hash;
         data.verifyEmailToken = verifyEmailToken;
         data.emailVerificationExpiresIn = emailVerificationExpiresIn;
+        
       user = await new User(data).save(); //user saved
-      res.status(200).send(response(STRINGS.TEXTS.userCreated, user));
+
+      let emailService = new MailService();
+      await emailService.requestEmailVerification(user, verifyEmailToken); //email send for verification
+
+      res.status(200).send(response(STRINGS.TEXTS.emailSent));
   
   } catch (err) {
     console.log(err.message,"err.message")
@@ -61,6 +67,7 @@ exports.Login = async (req, res) => {
 
 };
 
+
 // verify email
 
 exports.VerifyEmail = async (req, res) => {
@@ -90,6 +97,78 @@ exports.VerifyEmail = async (req, res) => {
     res
       .status(200)
       .send(response(STRINGS.TEXTS.userValidated, user));
+  } catch (err) {
+    console.log(err.message);
+    res.status(400).send(response(err.message));
+  }
+}
+
+
+// forgot password
+
+exports.ForgotPassword = async (req, res) => {
+  try {
+    const data = req.body;
+    
+    let user = await User.findOne({ email: data.email }); // Check if user exist
+    if (!user) return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
+    const activeUser = await User.findOne({ status: STRINGS.STATUS.ACTIVE }); // Check if user active
+   
+    if (!activeUser) return res.status(400).send(response(STRINGS.ERRORS.userVerification));
+   
+       const buf = crypto.randomBytes(20);
+        var resetPasswordToken = buf.toString("hex");
+        const restPasswordExpires = Date.now() + 900000;
+   
+        user =  await User.findOneAndUpdate(
+          {
+            _id: user._id,
+          },
+          {
+            $set: {
+              resetPasswordToken: resetPasswordToken,
+              restPasswordExpires: restPasswordExpires,
+            },
+          }
+        );
+        let emailService = new MailService();
+      await emailService.sendForgotPasswordEmail(user, resetPasswordToken); //email send for verification
+
+    res.status(200).send(response(STRINGS.TEXTS.emailSent));
+  } catch (error) {
+    res.status(400).send(response(error.message, []));
+  }
+}
+
+// reset password
+exports.ResetPassword = async (req, res) => {
+  try {
+    const {resetPasswordToken,password}=req.body
+    let user = await User.findOne({ resetPasswordToken: resetPasswordToken }); // Check if token exist
+    if (!user) return res.status(400).send(response(STRINGS.ERRORS.tokenInvalid));
+    let tokenExpires=await User.findOne(
+      {
+        resetPasswordToken: resetPasswordToken,
+        restPasswordExpires: {       
+          $gt: Date.now(),        //check verfiy token expiration is greator than date.now()
+        },  
+      })
+    if (!tokenExpires) return res.status(400).send(response(STRINGS.ERRORS.tokenIExpired));
+    const salt = bcrypt.genSaltSync(15);
+    const hash = await bcrypt.hash(password, salt);
+       user =  await User.findOneAndUpdate(
+      {
+        resetPasswordToken: resetPasswordToken,
+      },
+      {
+        $set: {
+          password: hash,
+        },
+      }
+    );
+    res
+      .status(200)
+      .send(response(STRINGS.TEXTS.passwordUpdated, user));
   } catch (err) {
     console.log(err.message);
     res.status(400).send(response(err.message));

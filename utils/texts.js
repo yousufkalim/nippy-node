@@ -11,9 +11,7 @@ module.exports = {
     emailInvalid: "Email Invalid!",
     passwordInvalid: "Password Invalid!",
     tokenInvalid: "Token Invalid!",
-    tokenIExpired: "Token has expired!",
-
-
+    tokenExpired: "Token has expired!",
     userVerification: "You have not verify your email address yet!",
     passwordCheck:"Password and Confirm Password are not same"
   },
@@ -22,13 +20,10 @@ module.exports = {
     userCreated: "User Created",
     userValidated: "User Validated Successfully",
     loginSuccess: "Login Successfully",
-  },
+    emailSent: "Email sent Successfully, please check your inbox",
+    passwordUpdated: "Password Updated Successfully",
+    requestEmailVerificationSubject:"Verification Email"
 
-  ROLES: {
-    USER: "User",
-    ALL: "All",
-    ADMIN: "Admin",
-    SUPERADMIN: "SuperAdmin",
   },
   STATUS: {
     ACTIVE: "Active",
