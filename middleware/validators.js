@@ -24,7 +24,7 @@ exports.registerUserValidator = [
       const password = req.body.password
 
       if(password !== confirmPassword){
-        throw new Error('Passwords must be same')
+        throw new Error('Password and Confirm Password must be same')
       }
     }),
 ];
@@ -37,6 +37,10 @@ exports.loginUserValidator = [
     .trim()
     .isLength({ min: 6 })
     .withMessage("min length must be 6 characters"),
+  check("device_name", "Device name is required.")
+    .notEmpty(),
+  check("device_id", "Device id is required.")
+    .notEmpty(),
 ];
 // verfiy email token login Validation
 exports.verifyemailValidator = [
@@ -45,6 +49,21 @@ exports.verifyemailValidator = [
 // forgot password Validation
 exports.forgotPasswordValidator = [
   check("email", "Email is required.").notEmpty().isEmail().trim(),
+
+];
+
+// update profile Validation
+exports.updateProfileValidator = [
+  check("email", "Email is required.").notEmpty().isEmail().trim(),
+  check("name", "Name is required.").notEmpty().trim(),
+  check("address", "Name is required.").notEmpty().trim(),
+  check("phone", "Phone is required.").notEmpty().
+  trim()
+  .isLength({ min: 10 })
+  .withMessage("min length must be 10 characters")
+  .trim(),
+
+
 
 ];
 // reset password Validation
@@ -63,7 +82,33 @@ exports.resetPasswordValidator = [
         const password = req.body.password
   
         if(password !== confirmPassword){
-          throw new Error('Passwords must be same')
+          throw new Error('Password and Confirm Password must be same')
+        }
+      }),
+];
+
+// update password Validation
+exports.updatePasswordValidator = [
+  check("old_password", "Old Password is required.")
+    .notEmpty()
+    .trim()
+    .isLength({ min: 6 })
+    .withMessage("Old Password min length must be 6 characters"),
+  check("new_password", "New Password is required.")
+    .notEmpty()
+    .trim()
+    .isLength({ min: 6 })
+    .withMessage("New Password min length must be 6 characters"),
+    check('confirm_password',"Confirm Password is required")
+    .notEmpty()
+      .trim()
+      .isLength({min:4})
+      .withMessage('Confirm Password min length must be 6 characters')
+      .custom(async (confirmPassword, {req}) => {
+        const password = req.body.new_password
+  
+        if(password !== confirmPassword){
+          throw new Error('Password and Confirm Password must be same')
         }
       }),
 ];
