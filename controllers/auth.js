@@ -322,4 +322,3 @@ exports.Logout = async (req, res) => {
     res.status(400).send(response(error.message, []));
   }
 }
-

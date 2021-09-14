@@ -31,7 +31,7 @@ router.put("/updatePassword/:id",auth(), updatePasswordValidator, isValidated, U
 // get single user
 router.get("/:id",auth(),  GetsingleUser);
 // get single user
-router.get("/", auth(),  GetallUsers);
+router.get("/getAll", auth(),  GetallUsers);
 
 // login user
 router.post("/logout",  Logout);

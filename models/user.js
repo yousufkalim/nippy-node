@@ -38,7 +38,11 @@ const userSchema = new Schema(
         ref: "Device",
         required: false,
       }],
-    
+      Ads:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ad",
+        required: false,
+      }],
       resetPasswordToken: String,
       restPasswordExpires: Date,
       verifyEmailToken: String,
