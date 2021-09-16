@@ -11,6 +11,19 @@ const userSchema = new Schema(
       type: String,
       trim: true,
     },
+    name: {
+      type: String,
+      trim: true,
+    },
+    phone: {
+      type: String,
+      trim: true,
+    },
+    address: {
+      type: String,
+      trim: true,
+     
+    },
     status: {
         type: String,
         enum: [STRINGS.STATUS.ACTIVE, STRINGS.STATUS.INACTIVE],
@@ -20,7 +33,16 @@ const userSchema = new Schema(
         type: Date,
         default: Date.now,
       },
-    
+      Devices:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Device",
+        required: false,
+      }],
+      Ads:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Ad",
+        required: false,
+      }],
       resetPasswordToken: String,
       restPasswordExpires: Date,
       verifyEmailToken: String,
