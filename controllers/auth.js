@@ -16,8 +16,9 @@ exports.Register = async (req, res) => {
   try {
     const data = req.body;
     let user = await User.findOne({ email: data.email }); // check if user already exists
-    if (user) return res.status(400).send(response(STRINGS.ERRORS.userExists, {}));
-    var verifyEmailToken = Math.floor(1000 + Math.random() * 9000)
+    if (user)
+      return res.status(400).send(response(STRINGS.ERRORS.userExists, {}));
+    var verifyEmailToken = Math.floor(1000 + Math.random() * 9000);
     const emailVerificationExpiresIn = Date.now() + 900000;
     const hash = await bcrypt.hash(data.password, +ENV.BCRYPT_SALT); // hashing password
     data.password = hash;
@@ -30,9 +31,8 @@ exports.Register = async (req, res) => {
     await emailService.requestEmailVerification(user, verifyEmailToken); //email send for verification
 
     res.status(200).send(response(STRINGS.TEXTS.emailSent));
-
   } catch (err) {
-    console.log(err.message, "err.message")
+    console.log(err.message, "err.message");
     res.send(response(err.message, 400));
   }
 };
@@ -42,20 +42,24 @@ exports.Login = async (req, res) => {
     const data = req.body;
 
     let user = await User.findOne({ email: data.email }); // Check if user exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.emailInvalid));
-    const activeUser = await User.findOne({ status: STRINGS.STATUS.ACTIVE }); // Check if user active
+    if (!user)
+      return res.status(400).send(response(STRINGS.ERRORS.emailInvalid));
+    // const activeUser = await User.findOne({ status: STRINGS.STATUS.ACTIVE }); // Check if user active
 
-    if (!activeUser) return res.status(400).send(response(STRINGS.ERRORS.userVerification));
+    // if (!activeUser) return res.status(400).send(response(STRINGS.ERRORS.userVerification));
 
     const isCorrect = await bcrypt.compare(data.password, user.password); // Check if user password is correct
     if (!isCorrect)
       return res.status(400).send(response(STRINGS.ERRORS.passwordInvalid));
     let device = await Device.findOne({
-      device_name: data.device_name  //check if device exists
+      device_name: data.device_name, //check if device exists
     });
 
     if (!device) {
-      device = await Device.create({ device_name: data.device_name, device_id: data.device_id });
+      device = await Device.create({
+        device_name: data.device_name,
+        device_id: data.device_id,
+      });
       user = await User.findOneAndUpdate(
         {
           _id: user.id,
@@ -66,7 +70,7 @@ exports.Login = async (req, res) => {
           },
         },
         {
-          new: true
+          new: true,
         }
       );
     }
@@ -84,26 +88,24 @@ exports.Login = async (req, res) => {
   } catch (error) {
     res.status(400).send(response(error.message, []));
   }
-
-
 };
-
 
 // verify email
 
 exports.VerifyEmail = async (req, res) => {
   try {
-    const { verifyEmailToken } = req.body
+    const { verifyEmailToken } = req.body;
     let user = await User.findOne({ verifyEmailToken: verifyEmailToken }); // Check if token exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.tokenInvalid));
-    let tokenExpires = await User.findOne(
-      {
-        verifyEmailToken: verifyEmailToken,
-        emailVerificationExpiresIn: {
-          $gt: Date.now(),        //check verfiy token expiration is greator than date.now()
-        },
-      })
-    if (!tokenExpires) return res.status(400).send(response(STRINGS.ERRORS.tokenExpired));
+    if (!user)
+      return res.status(400).send(response(STRINGS.ERRORS.tokenInvalid));
+    let tokenExpires = await User.findOne({
+      verifyEmailToken: verifyEmailToken,
+      emailVerificationExpiresIn: {
+        $gt: Date.now(), //check verfiy token expiration is greator than date.now()
+      },
+    });
+    if (!tokenExpires)
+      return res.status(400).send(response(STRINGS.ERRORS.tokenExpired));
 
     user = await User.findOneAndUpdate(
       {
@@ -115,18 +117,15 @@ exports.VerifyEmail = async (req, res) => {
         },
       },
       {
-        new: true
+        new: true,
       }
     );
-    res
-      .status(200)
-      .send(response(STRINGS.TEXTS.userValidated, user));
+    res.status(200).send(response(STRINGS.TEXTS.userValidated, user));
   } catch (err) {
     console.log(err.message);
     res.status(400).send(response(err.message));
   }
-}
-
+};
 
 // forgot password
 
@@ -135,13 +134,14 @@ exports.ForgotPassword = async (req, res) => {
     const data = req.body;
 
     let user = await User.findOne({ email: data.email }); // Check if user exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
+    if (!user)
+      return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
     const activeUser = await User.findOne({ status: STRINGS.STATUS.ACTIVE }); // Check if user active
 
-    if (!activeUser) return res.status(400).send(response(STRINGS.ERRORS.userVerification));
+    if (!activeUser)
+      return res.status(400).send(response(STRINGS.ERRORS.userVerification));
 
-
-    var resetPasswordToken = Math.floor(1000 + Math.random() * 9000)
+    var resetPasswordToken = Math.floor(1000 + Math.random() * 9000);
     const restPasswordExpires = Date.now() + 900000;
 
     user = await User.findOneAndUpdate(
@@ -155,7 +155,7 @@ exports.ForgotPassword = async (req, res) => {
         },
       },
       {
-        new: true
+        new: true,
       }
     );
     let emailService = new MailService();
@@ -165,22 +165,23 @@ exports.ForgotPassword = async (req, res) => {
   } catch (error) {
     res.status(400).send(response(error.message, []));
   }
-}
+};
 
 // reset password
 exports.ResetPassword = async (req, res) => {
   try {
-    const { resetPasswordToken, password } = req.body
+    const { resetPasswordToken, password } = req.body;
     let user = await User.findOne({ resetPasswordToken: resetPasswordToken }); // Check if token exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.tokenInvalid));
-    let tokenExpires = await User.findOne(
-      {
-        resetPasswordToken: resetPasswordToken,
-        restPasswordExpires: {
-          $gt: Date.now(),        //check verfiy token expiration is greator than date.now()
-        },
-      })
-    if (!tokenExpires) return res.status(400).send(response(STRINGS.ERRORS.tokenIExpired));
+    if (!user)
+      return res.status(400).send(response(STRINGS.ERRORS.tokenInvalid));
+    let tokenExpires = await User.findOne({
+      resetPasswordToken: resetPasswordToken,
+      restPasswordExpires: {
+        $gt: Date.now(), //check verfiy token expiration is greator than date.now()
+      },
+    });
+    if (!tokenExpires)
+      return res.status(400).send(response(STRINGS.ERRORS.tokenIExpired));
     const salt = bcrypt.genSaltSync(15);
     const hash = await bcrypt.hash(password, salt);
     user = await User.findOneAndUpdate(
@@ -193,54 +194,44 @@ exports.ResetPassword = async (req, res) => {
         },
       }
     );
-    res
-      .status(200)
-      .send(response(STRINGS.TEXTS.passwordUpdated, user));
+    res.status(200).send(response(STRINGS.TEXTS.passwordUpdated, user));
   } catch (err) {
     console.log(err.message);
     res.status(400).send(response(err.message));
   }
-}
+};
 
 //Get single User
 
 exports.GetsingleUser = async (req, res) => {
   try {
     let user = await User.findOne({ _id: req.params.id }); // Check if token exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
-    res
-      .status(200)
-      .send(response(STRINGS.TEXTS.userFetched, user));
+    if (!user)
+      return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
+    res.status(200).send(response(STRINGS.TEXTS.userFetched, user));
   } catch (error) {
     res.status(400).send(response(error.message));
-
   }
-
-}
+};
 
 //Get all Users
 
 exports.GetallUsers = async (req, res) => {
   try {
-    console.log("hello")
+    console.log("hello");
     let users = await User.find({}); // get all users
 
-    res
-      .status(200)
-      .send(response(STRINGS.TEXTS.userFetched, users));
+    res.status(200).send(response(STRINGS.TEXTS.userFetched, users));
   } catch (error) {
     res.status(400).send(response(error.message));
-
   }
-
-}
-
+};
 
 // update profile
 exports.UpdateProfile = async (req, res) => {
   try {
     const data = req.body;
-    let userId = req.params.id
+    let userId = req.params.id;
     user = await User.findByIdAndUpdate(
       {
         _id: userId,
@@ -252,17 +243,17 @@ exports.UpdateProfile = async (req, res) => {
           phone: data.phone,
           address: data.address,
         },
-      }, {
-      new: true
-    }
+      },
+      {
+        new: true,
+      }
     );
 
     res.status(200).send(response(STRINGS.TEXTS.profileUpdated, user));
   } catch (error) {
     res.status(400).send(response(error.message, []));
   }
-}
-
+};
 
 // update password
 exports.UpdatePassword = async (req, res) => {
@@ -272,10 +263,12 @@ exports.UpdatePassword = async (req, res) => {
     let oldPassword = data.old_password;
     let newPassword = data.new_password;
     let user = await User.findOne({ _id: req.params.id }); // Check if token exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
+    if (!user)
+      return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
     // Check if user password is correct
     const isCorrect = await bcrypt.compare(oldPassword, user.password);
-    if (!isCorrect) return res.status(400).send(response(STRINGS.ERRORS.oldpasswordInvalid));
+    if (!isCorrect)
+      return res.status(400).send(response(STRINGS.ERRORS.oldpasswordInvalid));
     const hash = await bcrypt.hash(newPassword, +ENV.BCRYPT_SALT); // hashing password
 
     user = await User.findByIdAndUpdate(
@@ -284,25 +277,25 @@ exports.UpdatePassword = async (req, res) => {
       },
       {
         $set: {
-          password: hash
+          password: hash,
         },
-      }, {
-      new: true
-    }
+      },
+      {
+        new: true,
+      }
     );
 
     res.status(200).send(response(STRINGS.TEXTS.profileUpdated, user));
   } catch (error) {
     res.status(400).send(response(error.message, []));
   }
-}
+};
 
 // logout user
 exports.Logout = async (req, res) => {
   try {
-
-    let device_id = req.body.device_id
-    let userId = req.body.user_id
+    let device_id = req.body.device_id;
+    let userId = req.body.user_id;
 
     await User.findByIdAndUpdate(
       {
@@ -312,13 +305,14 @@ exports.Logout = async (req, res) => {
         $pull: {
           Devices: device_id,
         },
-      }, {
-      new: true
-    }
+      },
+      {
+        new: true,
+      }
     );
-    await Device.findByIdAndRemove(device_id )
+    await Device.findByIdAndRemove(device_id);
     res.status(200).send(response(STRINGS.TEXTS.userLogout));
   } catch (error) {
     res.status(400).send(response(error.message, []));
   }
-}
+};
