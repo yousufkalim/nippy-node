@@ -4,21 +4,30 @@ const response = require("../utils/response");
 const User = require("../models/user");
 const Device = require("../models/device");
 
-
+const populateQuery = [
+    {
+      path: "Devices",
+      populate: [
+        {
+          path: "Device",
+        },
+      ],
+  
+    },
+    {
+      path: "Ads",
+      populate: [
+        {
+          path: "Ad",
+        },
+      ],
+    }
+  ];
 //get all Devices by user 
 
 exports.getAllDevicesByUser = async (req, res) => {
     try {
-        const populateQuery = [
-            {
-                path: "Devices",
-                populate: [
-                    {
-                        path: "Device",
-                    },
-                ],
-            },
-        ];
+       
         let userId = req.user.id;
         let user = await User.findById({ _id: userId }).populate(populateQuery); // Check if user exist
         if (!user) return res.status(400).send(response(STRINGS.ERRORS.userNotFound));

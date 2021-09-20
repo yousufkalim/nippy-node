@@ -21,14 +21,14 @@ module.exports = {
     AdCreated: "Ad Created Successfully",
     AdUpdated: "Ad Updated Successfully",
     AdDeleted: "Ad Deleted Successfully",
-
-
-
+    tokenValidated: "Token Validated Successfully",
     userValidated: "User Validated Successfully",
     loginSuccess: "Login Successfully",
     emailSent: "Email sent Successfully, please check your inbox",
     passwordUpdated: "Password Updated Successfully",
     requestEmailVerificationSubject:"Verification Email",
+    resetEmailVerificationSubject:"Reset Email",
+
     userFetched:"User Fetched Successfully",
     adFetched:"Ad Fetched Successfully",
 

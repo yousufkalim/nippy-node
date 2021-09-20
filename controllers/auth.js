@@ -10,7 +10,25 @@ const crypto = require("crypto");
 const MailService = require("../services/mail.service");
 
 const ENV = process.env;
+const populateQuery = [
+  {
+    path: "Devices",
+    populate: [
+      {
+        path: "Device",
+      },
+    ],
 
+  },
+  {
+    path: "Ads",
+    populate: [
+      {
+        path: "Ad",
+      },
+    ],
+  }
+];
 // register user
 exports.Register = async (req, res) => {
   try {
@@ -41,11 +59,10 @@ exports.Login = async (req, res) => {
   try {
     const data = req.body;
 
-    let user = await User.findOne({ email: data.email }); // Check if user exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.emailInvalid));
-    const activeUser = await User.findOne({ status: STRINGS.STATUS.ACTIVE }); // Check if user active
+    let user = await User.findOne({ email: data.email }).populate(populateQuery)// Check if user exist
 
-    if (!activeUser) return res.status(400).send(response(STRINGS.ERRORS.userVerification));
+    if (!user) return res.status(400).send(response(STRINGS.ERRORS.emailInvalid));
+    if (user.status !== STRINGS.STATUS.ACTIVE) return res.status(400).send(response(STRINGS.ERRORS.userVerification)); // check user is active
 
     const isCorrect = await bcrypt.compare(data.password, user.password); // Check if user password is correct
     if (!isCorrect)
@@ -66,9 +83,10 @@ exports.Login = async (req, res) => {
           },
         },
         {
-          new: true
+          new: true,
+
         }
-      );
+      ).populate(populateQuery)
     }
 
     const token = await JWT.sign(
@@ -93,17 +111,11 @@ exports.Login = async (req, res) => {
 
 exports.VerifyEmail = async (req, res) => {
   try {
-    const { verifyEmailToken } = req.body
+    const verifyEmailToken = req.params.token
+
     let user = await User.findOne({ verifyEmailToken: verifyEmailToken }); // Check if token exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.tokenInvalid));
-    let tokenExpires = await User.findOne(
-      {
-        verifyEmailToken: verifyEmailToken,
-        emailVerificationExpiresIn: {
-          $gt: Date.now(),        //check verfiy token expiration is greator than date.now()
-        },
-      })
-    if (!tokenExpires) return res.status(400).send(response(STRINGS.ERRORS.tokenExpired));
+    if (!user) return res.status(400).send(`<h1>${STRINGS.ERRORS.tokenInvalid}</h1>`);
+    if (user.emailVerificationExpiresIn < Date.now()) return res.status(400).send(`<h1>${STRINGS.ERRORS.tokenExpired}</h1>`);  //check verfiy token expiration is greator than date.now()
 
     user = await User.findOneAndUpdate(
       {
@@ -112,6 +124,8 @@ exports.VerifyEmail = async (req, res) => {
       {
         $set: {
           status: STRINGS.STATUS.ACTIVE,
+          verifyEmailToken: 0,
+          emailVerificationExpiresIn: Date.now()
         },
       },
       {
@@ -120,10 +134,10 @@ exports.VerifyEmail = async (req, res) => {
     );
     res
       .status(200)
-      .send(response(STRINGS.TEXTS.userValidated, user));
+      .send(`<h1>${STRINGS.TEXTS.userValidated}</h1>`);
   } catch (err) {
     console.log(err.message);
-    res.status(400).send(response(err.message));
+    res.status(400).send(err.message);
   }
 }
 
@@ -136,13 +150,9 @@ exports.ForgotPassword = async (req, res) => {
 
     let user = await User.findOne({ email: data.email }); // Check if user exist
     if (!user) return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
-    const activeUser = await User.findOne({ status: STRINGS.STATUS.ACTIVE }); // Check if user active
-
-    if (!activeUser) return res.status(400).send(response(STRINGS.ERRORS.userVerification));
-
-
+    if (user.status !== STRINGS.STATUS.ACTIVE) return res.status(400).send(response(STRINGS.ERRORS.userVerification)); // check user is active
     var resetPasswordToken = Math.floor(1000 + Math.random() * 9000)
-    const restPasswordExpires = Date.now() + 900000;
+    const resetPasswordExpires = Date.now() + 900000;
 
     user = await User.findOneAndUpdate(
       {
@@ -151,13 +161,13 @@ exports.ForgotPassword = async (req, res) => {
       {
         $set: {
           resetPasswordToken: resetPasswordToken,
-          restPasswordExpires: restPasswordExpires,
+          resetPasswordExpires: resetPasswordExpires,
         },
       },
       {
         new: true
       }
-    );
+    ).populate(populateQuery);
     let emailService = new MailService();
     await emailService.sendForgotPasswordEmail(user, resetPasswordToken); //email send for verification
 
@@ -173,14 +183,8 @@ exports.ResetPassword = async (req, res) => {
     const { resetPasswordToken, password } = req.body
     let user = await User.findOne({ resetPasswordToken: resetPasswordToken }); // Check if token exist
     if (!user) return res.status(400).send(response(STRINGS.ERRORS.tokenInvalid));
-    let tokenExpires = await User.findOne(
-      {
-        resetPasswordToken: resetPasswordToken,
-        restPasswordExpires: {
-          $gt: Date.now(),        //check verfiy token expiration is greator than date.now()
-        },
-      })
-    if (!tokenExpires) return res.status(400).send(response(STRINGS.ERRORS.tokenIExpired));
+    if (user.resetPasswordExpires < Date.now()) return res.status(400).send(response(STRINGS.ERRORS.tokenExpired));  //check reset token expiration is greator than date.now()
+
     const salt = bcrypt.genSaltSync(15);
     const hash = await bcrypt.hash(password, salt);
     user = await User.findOneAndUpdate(
@@ -192,7 +196,7 @@ exports.ResetPassword = async (req, res) => {
           password: hash,
         },
       }
-    );
+    ).populate(populateQuery);
     res
       .status(200)
       .send(response(STRINGS.TEXTS.passwordUpdated, user));
@@ -201,12 +205,28 @@ exports.ResetPassword = async (req, res) => {
     res.status(400).send(response(err.message));
   }
 }
+// validate token
+exports.ValidateToken = async (req, res) => {
+  try {
+    const resetPasswordToken = req.params.token
+    let user = await User.findOne({ resetPasswordToken: resetPasswordToken }); // Check if token exist
+    if (!user) return res.status(400).send(response(STRINGS.ERRORS.tokenInvalid));
+    if (user.resetPasswordExpires < Date.now()) return res.status(400).send(response(STRINGS.ERRORS.tokenExpired));  //check reset token expiration is greator than date.now()
+
+    res
+      .status(200)
+      .send(response(STRINGS.TEXTS.tokenValidated, resetPasswordToken));
+  } catch (err) {
+    console.log(err.message);
+    res.status(400).send(response(err.message));
+  } 
+}
 
 //Get single User
 
 exports.GetsingleUser = async (req, res) => {
   try {
-    let user = await User.findOne({ _id: req.params.id }); // Check if token exist
+    let user = await User.findOne({ _id: req.params.id }).populate(populateQuery); // Check if token exist
     if (!user) return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
     res
       .status(200)
@@ -222,9 +242,8 @@ exports.GetsingleUser = async (req, res) => {
 
 exports.GetallUsers = async (req, res) => {
   try {
-    console.log("hello")
-    let users = await User.find({}); // get all users
-
+ 
+    let users = await User.find({}).populate(populateQuery); // get all users
     res
       .status(200)
       .send(response(STRINGS.TEXTS.userFetched, users));
@@ -241,7 +260,7 @@ exports.UpdateProfile = async (req, res) => {
   try {
     const data = req.body;
     let userId = req.params.id
-    user = await User.findByIdAndUpdate(
+    let user = await User.findOneAndUpdate(
       {
         _id: userId,
       },
@@ -252,11 +271,11 @@ exports.UpdateProfile = async (req, res) => {
           phone: data.phone,
           address: data.address,
         },
-      }, {
-      new: true
-    }
-    );
-
+      },
+      {
+        new: true
+      }
+    ).populate(populateQuery);
     res.status(200).send(response(STRINGS.TEXTS.profileUpdated, user));
   } catch (error) {
     res.status(400).send(response(error.message, []));
@@ -267,6 +286,7 @@ exports.UpdateProfile = async (req, res) => {
 // update password
 exports.UpdatePassword = async (req, res) => {
   try {
+
     const data = req.body;
     let userId = req.params.id;
     let oldPassword = data.old_password;
@@ -289,7 +309,7 @@ exports.UpdatePassword = async (req, res) => {
       }, {
       new: true
     }
-    );
+    ).populate(populateQuery);
 
     res.status(200).send(response(STRINGS.TEXTS.profileUpdated, user));
   } catch (error) {
@@ -316,7 +336,7 @@ exports.Logout = async (req, res) => {
       new: true
     }
     );
-    await Device.findByIdAndRemove(device_id )
+    await Device.findByIdAndRemove(device_id)
     res.status(200).send(response(STRINGS.TEXTS.userLogout));
   } catch (error) {
     res.status(400).send(response(error.message, []));

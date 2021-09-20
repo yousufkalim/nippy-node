@@ -42,16 +42,19 @@ exports.loginUserValidator = [
   check("device_id", "Device id is required.")
     .notEmpty(),
 ];
-// verfiy email token login Validation
-exports.verifyemailValidator = [
-  check("verifyEmailToken", "verifyEmailToken is required.").notEmpty().trim(),
-];
+
 // forgot password Validation
 exports.forgotPasswordValidator = [
   check("email", "Email is required.").notEmpty().isEmail().trim(),
 
 ];
+// logout password Validation
+exports.logoutValidator = [
+  check("device_id", "Device Id is required.").notEmpty(),
+  check("user_id", "Device Id is required.").notEmpty(),
 
+
+];
 // update profile Validation
 exports.updateProfileValidator = [
   check("email", "Email is required.").notEmpty().isEmail().trim(),
@@ -68,6 +71,9 @@ exports.updateProfileValidator = [
 ];
 // reset password Validation
 exports.resetPasswordValidator = [
+  check("resetPasswordToken", "resetPasswordToken is required.")
+  .notEmpty()
+  .trim(),
   check("password", "Password is required.")
     .notEmpty()
     .trim()
