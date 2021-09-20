@@ -3,7 +3,25 @@ const response = require("../utils/response");
 const Ad = require("../models/ad");
 const User = require("../models/user");
 const Device = require("../models/device");
-
+const populateQuery = [
+    {
+      path: "Devices",
+      populate: [
+        {
+          path: "Device",
+        },
+      ],
+  
+    },
+    {
+      path: "Ads",
+      populate: [
+        {
+          path: "Ad",
+        },
+      ],
+    }
+  ];
 //create createAd 
 
 exports.createAd = async (req, res) => {
@@ -23,7 +41,7 @@ exports.createAd = async (req, res) => {
             {
                 new: true
             }
-        );
+        ).populate(populateQuery);
         res
             .status(200)
             .send(response(STRINGS.TEXTS.AdCreated, newAd));
@@ -56,7 +74,7 @@ exports.updateAd = async (req, res) => {
             {
                 new: true
             }
-        );
+        ).populate(populateQuery);
         res
             .status(200)
             .send(response(STRINGS.TEXTS.AdUpdated, newAd));
@@ -71,7 +89,7 @@ exports.updateAd = async (req, res) => {
 exports.getSingleAd = async (req, res) => {
     try {
         let adId = req.params.id;
-        let ad = await Ad.findOne({ _id: adId }); // Check if ad exist
+        let ad = await Ad.findOne({ _id: adId }).populate(populateQuery);// Check if ad exist
         if (!ad) return res.status(400).send(response(STRINGS.ERRORS.adNotFound));
 
         return res
@@ -87,16 +105,7 @@ exports.getSingleAd = async (req, res) => {
 
 exports.getAllAdsByUser = async (req, res) => {
     try {
-        const populateQuery = [
-            {
-                path: "Ads",
-                populate: [
-                    {
-                        path: "Ad",
-                    },
-                ],
-            },
-        ];
+       
         let userId = req.user.id;
         let user = await User.findById({ _id: userId }).populate(populateQuery); // Check if user exist
         if (!user) return res.status(400).send(response(STRINGS.ERRORS.userNotFound));

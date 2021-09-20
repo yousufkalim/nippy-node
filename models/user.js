@@ -44,7 +44,7 @@ const userSchema = new Schema(
         required: false,
       }],
       resetPasswordToken: String,
-      restPasswordExpires: Date,
+      resetPasswordExpires: Date,
       verifyEmailToken: String,
       emailVerificationExpiresIn: Date,
   });
