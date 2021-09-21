@@ -1,6 +1,5 @@
 const JWT = require("jsonwebtoken");
 const STRINGS = require("../utils/texts");
-const response = require("../utils/response");
 const User = require("../models/user");
 
 /**
@@ -16,14 +15,14 @@ function auth() {
     const header = req.get("Authorization");
 
     if (!header || !header.startsWith("Bearer")) {
-      return res.send(response("Unauthorized access: Token not found", 400));
+      return res.send({ message: "Unauthorized access: Token not found" });
     }
     const token = header.split(" ")[1];
     const decoded = JWT.verify(token, process.env.JWT_SECRET);
 
     let user = await User.findOne({ _id: decoded.id });
     if (!user)
-      return res.send(response("Unauthorized access: User does not exist", 400));
+      return res.send({ message: "Unauthorized access: User does not exist" });
 
     req.user = user;
     req.userId = user._id;
