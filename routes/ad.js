@@ -1,11 +1,13 @@
 // Init
 const router = require("express").Router();
-const { createAd, updateAd, getSingleAd, getAllAdsByUser,deleteAdByUser } = require("../controllers/ad.js");
 const {
-    AdValidator,
-
-    isValidated
-} = require("../middleware/validators");
+  createAd,
+  updateAd,
+  getSingleAd,
+  getAllAdsByUser,
+  deleteAdByUser,
+} = require("../controllers/ad.js");
+const { AdValidator, isValidated } = require("../middleware/validators");
 const auth = require("../middleware/auth");
 
 // create Ad

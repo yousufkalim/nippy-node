@@ -1,6 +1,8 @@
 module.exports = {
   ERRORS: {
     userNotFound: "User Not Found",
+    deviceNotFound: "Device Not Found",
+
     userExists: "User exists",
     adNotFound: "Ad Not Found",
 
@@ -11,9 +13,8 @@ module.exports = {
     tokenInvalid: "Token Invalid!",
     tokenExpired: "Token has expired!",
     userVerification: "You have not verify your email address yet!",
-    passwordCheck:"Password and Confirm Password are not same",
+    passwordCheck: "Password and Confirm Password are not same",
     oldpasswordInvalid: "Old Password is Invalid!",
-    
   },
   TEXTS: {
     allUsers: "All Users",
@@ -26,14 +27,13 @@ module.exports = {
     loginSuccess: "Login Successfully",
     emailSent: "Email sent Successfully, please check your inbox",
     passwordUpdated: "Password Updated Successfully",
-    requestEmailVerificationSubject:"Verification Email",
-    resetEmailVerificationSubject:"Reset Email",
+    requestEmailVerificationSubject: "Verification Email",
+    resetEmailVerificationSubject: "Reset Email",
 
-    userFetched:"User Fetched Successfully",
-    adFetched:"Ad Fetched Successfully",
+    userFetched: "User Fetched Successfully",
+    adFetched: "Ad Fetched Successfully",
 
-
-    profileUpdated:"Profile Updated Successfully",
+    profileUpdated: "Profile Updated Successfully",
     userLogout: "User Logout Successfully",
   },
   STATUS: {
@@ -45,8 +45,6 @@ module.exports = {
     USER: "User",
     DEVICE: "Device",
     AD: "Ad",
-
-
   },
 };
 
