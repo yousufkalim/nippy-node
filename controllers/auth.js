@@ -1,14 +1,10 @@
 //Login User
 const STRINGS = require("../utils/texts");
-const response = require("../utils/response");
 const bcrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
 const User = require("../models/user");
 const Device = require("../models/device");
-
-const crypto = require("crypto");
 const MailService = require("../services/mail.service");
-
 const ENV = process.env;
 const populateQuery = [
   {
@@ -18,7 +14,6 @@ const populateQuery = [
         path: "Device",
       },
     ],
-
   },
   {
     path: "Ads",
@@ -27,7 +22,7 @@ const populateQuery = [
         path: "Ad",
       },
     ],
-  }
+  },
 ];
 // register user
 exports.Register = async (req, res) => {
@@ -35,23 +30,24 @@ exports.Register = async (req, res) => {
     const data = req.body;
     let user = await User.findOne({ email: data.email }); // check if user already exists
     if (user)
-      return res.status(400).send(response(STRINGS.ERRORS.userExists, {}));
+      return res.status(404).json({ message: STRINGS.ERRORS.userExists });
+
     var verifyEmailToken = Math.floor(1000 + Math.random() * 9000);
     const emailVerificationExpiresIn = Date.now() + 900000;
     const hash = await bcrypt.hash(data.password, +ENV.BCRYPT_SALT); // hashing password
+
     data.password = hash;
     data.verifyEmailToken = verifyEmailToken;
     data.emailVerificationExpiresIn = emailVerificationExpiresIn;
-
     user = await new User(data).save(); //user saved
 
     let emailService = new MailService();
     await emailService.requestEmailVerification(user, verifyEmailToken); //email send for verification
 
-    res.status(200).send(response(STRINGS.TEXTS.emailSent));
-  } catch (err) {
-    console.log(err.message, "err.message");
-    res.send(response(err.message, 400));
+    res.json({ message: STRINGS.TEXTS.emailSent });
+  } catch (error) {
+    console.log(error.message, "error.message");
+    res.json({ message: error.message });
   }
 };
 // login user
@@ -59,14 +55,18 @@ exports.Login = async (req, res) => {
   try {
     const data = req.body;
 
-    let user = await User.findOne({ email: data.email }).populate(populateQuery)// Check if user exist
+    let user = await User.findOne({ email: data.email }).populate(
+      populateQuery
+    ); // Check if user exist
 
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.emailInvalid));
-    if (user.status !== STRINGS.STATUS.ACTIVE) return res.status(400).send(response(STRINGS.ERRORS.userVerification)); // check user is active
+    if (!user)
+      return res.status(404).send({ message: STRINGS.ERRORS.emailInvalid });
+    if (user.status !== STRINGS.STATUS.ACTIVE)
+      return res.status(401).send({ message: STRINGS.ERRORS.userVerification }); // check user is active
 
     const isCorrect = await bcrypt.compare(data.password, user.password); // Check if user password is correct
     if (!isCorrect)
-      return res.status(400).send(response(STRINGS.ERRORS.passwordInvalid));
+      return res.status(404).send({ message: STRINGS.ERRORS.passwordInvalid });
     let device = await Device.findOne({
       device_name: data.device_name, //check if device exists
     });
@@ -88,7 +88,7 @@ exports.Login = async (req, res) => {
         {
           new: true,
         }
-      ).populate(populateQuery)
+      ).populate(populateQuery);
     }
 
     const token = await JWT.sign(
@@ -100,21 +100,24 @@ exports.Login = async (req, res) => {
       user,
       token,
     };
-    res.status(200).send(response(STRINGS.TEXTS.loginSuccess, result));
+    res.json({ message: STRINGS.TEXTS.loginSuccess, result });
   } catch (error) {
-    res.status(400).send(response(error.message, []));
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
 // verify email
 
-exports.VerifyEmail = async (req, res) => {
+exports.verifyEmail = async (req, res) => {
   try {
-    const verifyEmailToken = req.params.token
+    const verifyEmailToken = req.params.token;
 
     let user = await User.findOne({ verifyEmailToken: verifyEmailToken }); // Check if token exist
-    if (!user) return res.status(400).send(`<h1>${STRINGS.ERRORS.tokenInvalid}</h1>`);
-    if (user.emailVerificationExpiresIn < Date.now()) return res.status(400).send(`<h1>${STRINGS.ERRORS.tokenExpired}</h1>`);  //check verfiy token expiration is greator than date.now()
+    if (!user)
+      return res.status(404).send(`<h1>${STRINGS.ERRORS.tokenInvalid}</h1>`);
+    if (user.emailVerificationExpiresIn < Date.now())
+      return res.status(404).send(`<h1>${STRINGS.ERRORS.tokenExpired}</h1>`); //check verfiy token expiration is greator than date.now()
 
     user = await User.findOneAndUpdate(
       {
@@ -124,32 +127,32 @@ exports.VerifyEmail = async (req, res) => {
         $set: {
           status: STRINGS.STATUS.ACTIVE,
           verifyEmailToken: 0,
-          emailVerificationExpiresIn: Date.now()
+          emailVerificationExpiresIn: Date.now(),
         },
       },
       {
         new: true,
       }
     );
-    res
-      .status(200)
-      .send(`<h1>${STRINGS.TEXTS.userValidated}</h1>`);
-  } catch (err) {
-    console.log(err.message);
-    res.status(400).send(err.message);
+    res.json(`<h1>${STRINGS.TEXTS.userValidated}</h1>`);
+  } catch (error) {
+    console.log("Error--->", error);
+    res.status(500).send(error.message);
   }
 };
 
 // forgot password
 
-exports.ForgotPassword = async (req, res) => {
+exports.forgotPassword = async (req, res) => {
   try {
     const data = req.body;
 
     let user = await User.findOne({ email: data.email }); // Check if user exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
-    if (user.status !== STRINGS.STATUS.ACTIVE) return res.status(400).send(response(STRINGS.ERRORS.userVerification)); // check user is active
-    var resetPasswordToken = Math.floor(1000 + Math.random() * 9000)
+    if (!user)
+      return res.status(404).send({ message: STRINGS.ERRORS.userNotFound });
+    if (user.status !== STRINGS.STATUS.ACTIVE)
+      return res.status(401).send({ message: STRINGS.ERRORS.userVerification }); // check user is active
+    var resetPasswordToken = Math.floor(1000 + Math.random() * 9000);
     const resetPasswordExpires = Date.now() + 900000;
 
     user = await User.findOneAndUpdate(
@@ -169,19 +172,22 @@ exports.ForgotPassword = async (req, res) => {
     let emailService = new MailService();
     await emailService.sendForgotPasswordEmail(user, resetPasswordToken); //email send for verification
 
-    res.status(200).send(response(STRINGS.TEXTS.emailSent));
+    res.json({ message: STRINGS.TEXTS.emailSent });
   } catch (error) {
-    res.status(400).send(response(error.message, []));
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
 // reset password
-exports.ResetPassword = async (req, res) => {
+exports.resetPassword = async (req, res) => {
   try {
     const { resetPasswordToken, password } = req.body;
     let user = await User.findOne({ resetPasswordToken: resetPasswordToken }); // Check if token exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.tokenInvalid));
-    if (user.resetPasswordExpires < Date.now()) return res.status(400).send(response(STRINGS.ERRORS.tokenExpired));  //check reset token expiration is greator than date.now()
+    if (!user)
+      return res.status(404).send({ message: STRINGS.ERRORS.tokenInvalid });
+    if (user.resetPasswordExpires < Date.now())
+      return res.status(401).send({ message: STRINGS.ERRORS.tokenExpired }); //check reset token expiration is greator than date.now()
 
     const salt = bcrypt.genSaltSync(15);
     const hash = await bcrypt.hash(password, salt);
@@ -195,64 +201,63 @@ exports.ResetPassword = async (req, res) => {
         },
       }
     ).populate(populateQuery);
-    res
-      .status(200)
-      .send(response(STRINGS.TEXTS.passwordUpdated, user));
-  } catch (err) {
-    console.log(err.message);
-    res.status(400).send(response(err.message));
+    res.json({ message: STRINGS.TEXTS.passwordUpdated, user });
+  } catch (error) {
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
   }
-}
+};
 // validate token
-exports.ValidateToken = async (req, res) => {
+exports.validateToken = async (req, res) => {
   try {
-    const resetPasswordToken = req.params.token
+    const resetPasswordToken = req.params.token;
     let user = await User.findOne({ resetPasswordToken: resetPasswordToken }); // Check if token exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.tokenInvalid));
-    if (user.resetPasswordExpires < Date.now()) return res.status(400).send(response(STRINGS.ERRORS.tokenExpired));  //check reset token expiration is greator than date.now()
+    if (!user)
+      return res.status(404).send({ message: STRINGS.ERRORS.tokenInvalid });
+    if (user.resetPasswordExpires < Date.now())
+      return res.status(404).send({ message: STRINGS.ERRORS.tokenExpired }); //check reset token expiration is greator than date.now()
 
-    res
-      .status(200)
-      .send(response(STRINGS.TEXTS.tokenValidated, resetPasswordToken));
-  } catch (err) {
-    console.log(err.message);
-    res.status(400).send(response(err.message));
-  } 
-}
+    res.json({ message: STRINGS.TEXTS.tokenValidated, resetPasswordToken });
+  } catch (error) {
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
+  }
+};
 
 //Get single User
 
-exports.GetsingleUser = async (req, res) => {
+exports.getsingleUser = async (req, res) => {
   try {
-    let user = await User.findOne({ _id: req.params.id }).populate(populateQuery); // Check if token exist
-    if (!user) return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
-    res
-      .status(200)
-      .send(response(STRINGS.TEXTS.userFetched, user));
+    let user = await User.findOne({ _id: req.params.id }).populate(
+      populateQuery
+    ); // Check if user id exist
+    if (!user)
+      return res.status(404).send({ message: STRINGS.ERRORS.userNotFound });
+
+    res.json({ message: STRINGS.TEXTS.userFetched, user });
   } catch (error) {
-    res.status(400).send(response(error.message));
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
 //Get all Users
 
-exports.GetallUsers = async (req, res) => {
+exports.getallUsers = async (req, res) => {
   try {
- 
     let users = await User.find({}).populate(populateQuery); // get all users
-    res
-      .status(200)
-      .send(response(STRINGS.TEXTS.userFetched, users));
+    res.json({ message: STRINGS.TEXTS.userFetched, users });
   } catch (error) {
-    res.status(400).send(response(error.message));
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
 // update profile
-exports.UpdateProfile = async (req, res) => {
+exports.updateProfile = async (req, res) => {
   try {
     const data = req.body;
-    let userId = req.params.id
+    let userId = req.params.id;
     let user = await User.findOneAndUpdate(
       {
         _id: userId,
@@ -266,30 +271,32 @@ exports.UpdateProfile = async (req, res) => {
         },
       },
       {
-        new: true
+        new: true,
       }
     ).populate(populateQuery);
-    res.status(200).send(response(STRINGS.TEXTS.profileUpdated, user));
+    res.json({ message: STRINGS.TEXTS.profileUpdated, user });
   } catch (error) {
-    res.status(400).send(response(error.message, []));
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
 // update password
-exports.UpdatePassword = async (req, res) => {
+exports.updatePassword = async (req, res) => {
   try {
-
     const data = req.body;
     let userId = req.params.id;
     let oldPassword = data.old_password;
     let newPassword = data.new_password;
     let user = await User.findOne({ _id: req.params.id }); // Check if token exist
     if (!user)
-      return res.status(400).send(response(STRINGS.ERRORS.userNotFound));
+      return res.status(404).send({ message: STRINGS.ERRORS.userNotFound });
     // Check if user password is correct
     const isCorrect = await bcrypt.compare(oldPassword, user.password);
     if (!isCorrect)
-      return res.status(400).send(response(STRINGS.ERRORS.oldpasswordInvalid));
+      return res
+        .status(404)
+        .send({ message: STRINGS.ERRORS.oldpasswordInvalid });
     const hash = await bcrypt.hash(newPassword, +ENV.BCRYPT_SALT); // hashing password
 
     user = await User.findByIdAndUpdate(
@@ -300,14 +307,31 @@ exports.UpdatePassword = async (req, res) => {
         $set: {
           password: hash,
         },
-      }, {
-      new: true
-    }
+      },
+      {
+        new: true,
+      }
     ).populate(populateQuery);
 
-    res.status(200).send(response(STRINGS.TEXTS.profileUpdated, user));
+    res.json({ message: STRINGS.TEXTS.profileUpdated, user });
   } catch (error) {
-    res.status(400).send(response(error.message, []));
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+//get all Devices by user
+
+exports.getAllDevicesByUser = async (req, res) => {
+  try {
+    let userId = req.user.id;
+    let user = await User.findById({ _id: userId }).populate(populateQuery); // Check if user exist
+    if (!user)
+      return res.status(404).send({ message: STRINGS.ERRORS.userNotFound });
+    return res.json({ message: STRINGS.TEXTS.adFetched, user });
+  } catch (error) {
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -317,22 +341,28 @@ exports.Logout = async (req, res) => {
     let device_id = req.body.device_id;
     let userId = req.body.user_id;
 
-    await User.findByIdAndUpdate(
+    let device = await Device.findOne({ _id: device_id }); // Check if device exist
+
+    if (!device)
+      return res.status(404).send({ message: STRINGS.ERRORS.deviceNotFound });
+    await Device.findByIdAndRemove(device_id); //remove device
+    device = await User.findByIdAndUpdate(
       {
         _id: userId,
       },
       {
         $pull: {
-          Devices: device_id,
+          Devices: device._id,
         },
       },
       {
         new: true,
       }
     );
-    await Device.findByIdAndRemove(device_id)
-    res.status(200).send(response(STRINGS.TEXTS.userLogout));
+
+    res.json({ message: STRINGS.TEXTS.userLogout });
   } catch (error) {
-    res.status(400).send(response(error.message, []));
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
   }
 };

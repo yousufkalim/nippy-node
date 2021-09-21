@@ -1,13 +1,28 @@
 // Init
 const router = require("express").Router();
-const { Register, Login, VerifyEmail, Logout, UpdatePassword, UpdateProfile, ForgotPassword, ResetPassword, GetsingleUser, GetallUsers, ValidateToken } = require("../controllers/auth.js");
+const {
+  Register,
+  Login,
+  verifyEmail,
+  Logout,
+  updatePassword,
+  getAllDevicesByUser,
+  updateProfile,
+  forgotPassword,
+  resetPassword,
+  getsingleUser,
+  getallUsers,
+  validateToken,
+} = require("../controllers/auth.js");
 const {
   registerUserValidator,
   loginUserValidator,
   isValidated,
   forgotPasswordValidator,
   resetPasswordValidator,
-  updateProfileValidator, updatePasswordValidator,logoutValidator
+  updateProfileValidator,
+  updatePasswordValidator,
+  logoutValidator,
 } = require("../middleware/validators");
 const auth = require("../middleware/auth");
 
@@ -17,25 +32,44 @@ router.post("/register", registerUserValidator, isValidated, Register);
 // login user
 router.post("/login", loginUserValidator, isValidated, Login);
 // verify email token
-router.get("/verify/:token", VerifyEmail);
+router.get("/verify/:token", verifyEmail);
 // forgot password
-router.post("/forgot", forgotPasswordValidator,isValidated, ForgotPassword);
+router.post("/forgot", forgotPasswordValidator, isValidated, forgotPassword);
 // validate reset token
-router.post("/validate/:token", ValidateToken);
+router.post("/validate/:token", validateToken);
 //set new password
-router.post("/setPasssword", resetPasswordValidator,isValidated, ResetPassword);
+router.post(
+  "/setPasssword",
+  resetPasswordValidator,
+  isValidated,
+  resetPassword
+);
 // update profile
-router.put("/update/:id", auth(), updateProfileValidator, isValidated, UpdateProfile);
+router.put(
+  "/update/:id",
+  auth(),
+  updateProfileValidator,
+  isValidated,
+  updateProfile
+);
 // update profile password
-router.put("/updatePassword/:id", auth(), updatePasswordValidator, isValidated, UpdatePassword);
+router.put(
+  "/updatePassword/:id",
+  auth(),
+  updatePasswordValidator,
+  isValidated,
+  updatePassword
+);
 
 // get single user
-router.get("/:id", auth(), GetsingleUser);
+router.get("/:id", auth(), getsingleUser);
 // get all users
-router.get("/", auth(), GetallUsers);
+router.get("/", auth(), getallUsers);
 
+// get All devices By User
+router.get("/device/getAll", auth(), getAllDevicesByUser);
 // login user
-router.post("/logout",logoutValidator, isValidated, Logout);
+router.post("/logout", logoutValidator, isValidated, Logout);
 
 // Export
 module.exports = router;
