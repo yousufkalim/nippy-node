@@ -134,7 +134,7 @@ exports.verifyEmail = async (req, res) => {
         new: true,
       }
     );
-    res.json(`<h1>${STRINGS.TEXTS.userValidated}</h1>`);
+    res.send(`<h1>${STRINGS.TEXTS.userValidated}</h1>`);
   } catch (error) {
     console.log("Error--->", error);
     res.status(500).send(error.message);
@@ -341,12 +341,13 @@ exports.Logout = async (req, res) => {
     let device_id = req.body.device_id;
     let userId = req.body.user_id;
 
-    let device = await Device.findOne({ _id: device_id }); // Check if device exist
+    let device = await Device.findOne({ device_id: device_id }); // Check if device exist
 
     if (!device)
       return res.status(404).send({ message: STRINGS.ERRORS.deviceNotFound });
-    await Device.findByIdAndRemove(device_id); //remove device
+    await Device.findOneAndRemove({ device_id }); //remove device
     device = await User.findByIdAndUpdate(
+      //delete device from user
       {
         _id: userId,
       },
