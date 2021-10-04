@@ -13,6 +13,7 @@ const {
   getsingleUser,
   getallUsers,
   validateToken,
+  uploadImage,
 } = require("../controllers/auth.js");
 const {
   registerUserValidator,
@@ -25,6 +26,7 @@ const {
   logoutValidator,
 } = require("../middleware/validators");
 const auth = require("../middleware/auth");
+const { upload } = require("../middleware/multer.js");
 
 // Routes
 // register user
@@ -68,6 +70,8 @@ router.get("/", auth(), getallUsers);
 
 // get All devices By User
 router.get("/device/getAll", auth(), getAllDevicesByUser);
+//upload image
+router.post("/upload", upload.single("image"), uploadImage);
 // login user
 router.post("/logout", logoutValidator, isValidated, Logout);
 

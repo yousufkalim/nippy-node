@@ -7,13 +7,13 @@ const {
   getAllAdsByUser,
   deleteAdByUser,
 } = require("../controllers/ad.js");
-const { AdValidator, isValidated } = require("../middleware/validators");
+
 const auth = require("../middleware/auth");
 
 // create Ad
-router.post("/create", auth(), AdValidator, isValidated, createAd);
+router.post("/create", auth(), createAd);
 // update Ad
-router.put("/update/:id", auth(), AdValidator, isValidated, updateAd);
+router.put("/update/:id", auth(), updateAd);
 // get single Ad
 router.get("/:id", auth(), getSingleAd);
 // get All Ads By User
