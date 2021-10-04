@@ -24,7 +24,6 @@ const {
   updateProfileValidator,
   updatePasswordValidator,
   logoutValidator,
-  uploadImageValidator,
 } = require("../middleware/validators");
 const auth = require("../middleware/auth");
 const { upload } = require("../middleware/multer.js");
@@ -75,8 +74,7 @@ router.get("/device/getAll", auth(), getAllDevicesByUser);
 router.post(
   "/upload",
   upload.single("image"),
-  uploadImageValidator,
-  isValidated,
+
   uploadImage
 );
 

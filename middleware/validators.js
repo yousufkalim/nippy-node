@@ -45,10 +45,7 @@ exports.loginUserValidator = [
 exports.forgotPasswordValidator = [
   check("email", "Email is required.").notEmpty().isEmail().trim(),
 ];
-// uplaod image Validation
-exports.uploadImageValidator = [
-  check("image", "Image is required.").notEmpty(),
-];
+
 // logout password Validation
 exports.logoutValidator = [
   check("device_id", "Device Id is required.").notEmpty(),
