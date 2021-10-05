@@ -367,3 +367,15 @@ exports.Logout = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+exports.uploadImage = async (req, res) => {
+  try {
+    let uploadedPicture;
+    if (req.file) {
+      uploadedPicture = req.file.path;
+    }
+    return res.json({ image: uploadedPicture });
+  } catch (error) {
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
+  }
+};
