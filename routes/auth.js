@@ -49,7 +49,7 @@ router.post("/validate/:token", validateToken);
 router.post(
   "/createAsset",
   auth(),
-  upload("/Asset", "image", "single"),
+  upload("/Assets", "image", "single"),
   createAsset
 );
 
