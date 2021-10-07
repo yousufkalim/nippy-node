@@ -4,26 +4,13 @@ const bcrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
 const User = require("../models/user");
 const Device = require("../models/device");
+const Asset = require("../models/asset");
+const Media = require("../models/media");
+const Effect = require("../models/effect");
+
 const MailService = require("../services/mail.service");
 const ENV = process.env;
-const populateQuery = [
-  {
-    path: "Devices",
-    populate: [
-      {
-        path: "Device",
-      },
-    ],
-  },
-  {
-    path: "Ads",
-    populate: [
-      {
-        path: "Ad",
-      },
-    ],
-  },
-];
+
 // register user
 exports.Register = async (req, res) => {
   try {
@@ -55,9 +42,7 @@ exports.Login = async (req, res) => {
   try {
     const data = req.body;
 
-    let user = await User.findOne({ email: data.email }).populate(
-      populateQuery
-    ); // Check if user exist
+    let user = await User.findOne({ email: data.email }); // Check if user exist
 
     if (!user)
       return res.status(404).send({ message: STRINGS.ERRORS.emailInvalid });
@@ -70,25 +55,12 @@ exports.Login = async (req, res) => {
     let device = await Device.findOne({
       device_name: data.device_name, //check if device exists
     });
-
     if (!device) {
       device = await Device.create({
         device_name: data.device_name,
         device_id: data.device_id,
+        userId: user._id,
       });
-      user = await User.findOneAndUpdate(
-        {
-          _id: user.id,
-        },
-        {
-          $push: {
-            Devices: device._id,
-          },
-        },
-        {
-          new: true,
-        }
-      ).populate(populateQuery);
     }
 
     const token = await JWT.sign(
@@ -168,7 +140,7 @@ exports.forgotPassword = async (req, res) => {
       {
         new: true,
       }
-    ).populate(populateQuery);
+    );
     let emailService = new MailService();
     await emailService.sendForgotPasswordEmail(user, resetPasswordToken); //email send for verification
 
@@ -200,7 +172,7 @@ exports.resetPassword = async (req, res) => {
           password: hash,
         },
       }
-    ).populate(populateQuery);
+    );
     res.json({ message: STRINGS.TEXTS.passwordUpdated, user });
   } catch (error) {
     console.log("Error--->", error);
@@ -228,9 +200,7 @@ exports.validateToken = async (req, res) => {
 
 exports.getsingleUser = async (req, res) => {
   try {
-    let user = await User.findOne({ _id: req.params.id }).populate(
-      populateQuery
-    ); // Check if user id exist
+    let user = await User.findOne({ _id: req.params.id }); // Check if user id exist
     if (!user)
       return res.status(404).send({ message: STRINGS.ERRORS.userNotFound });
 
@@ -245,7 +215,7 @@ exports.getsingleUser = async (req, res) => {
 
 exports.getallUsers = async (req, res) => {
   try {
-    let users = await User.find({}).populate(populateQuery); // get all users
+    let users = await User.find({}); // get all users
     res.json({ message: STRINGS.TEXTS.userFetched, users });
   } catch (error) {
     console.log("Error--->", error);
@@ -273,7 +243,7 @@ exports.updateProfile = async (req, res) => {
       {
         new: true,
       }
-    ).populate(populateQuery);
+    );
     res.json({ message: STRINGS.TEXTS.profileUpdated, user });
   } catch (error) {
     console.log("Error--->", error);
@@ -311,7 +281,7 @@ exports.updatePassword = async (req, res) => {
       {
         new: true,
       }
-    ).populate(populateQuery);
+    );
 
     res.json({ message: STRINGS.TEXTS.profileUpdated, user });
   } catch (error) {
@@ -325,45 +295,157 @@ exports.updatePassword = async (req, res) => {
 exports.getAllDevicesByUser = async (req, res) => {
   try {
     let userId = req.user.id;
-    let user = await User.findById({ _id: userId }).populate(populateQuery); // Check if user exist
-    if (!user)
-      return res.status(404).send({ message: STRINGS.ERRORS.userNotFound });
-    return res.json({ message: STRINGS.TEXTS.adFetched, user });
+    let device = await Device.find({ userId: userId }); // Check if user exist
+    return res.json({ device });
   } catch (error) {
     console.log("Error--->", error);
     res.status(500).json({ message: error.message });
   }
 };
 
+//get all Assets by user
+
+exports.getAllAssetsByUser = async (req, res) => {
+  try {
+    let userId = req.user.id;
+    let assets = await Asset.find({ userId: userId });
+    return res.json({ assets });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+//get all Effects
+
+exports.getAllEffects = async (req, res) => {
+  try {
+    let effects = await Effect.find({});
+    return res.json({ effects });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+//get all Media by user
+
+exports.getAllMediaByUser = async (req, res) => {
+  try {
+    let userId = req.user.id;
+    let media = await Media.find({ userId: userId });
+    return res.json({ media });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 // logout user
 exports.Logout = async (req, res) => {
   try {
     let device_id = req.body.device_id;
-    let userId = req.body.user_id;
-
-    let device = await Device.findOne({ device_id: device_id }); // Check if device exist
-
+    let device = await Device.findOne({
+      device_id: device_id,
+    }); // Check if device exist
     if (!device)
       return res.status(404).send({ message: STRINGS.ERRORS.deviceNotFound });
     await Device.findOneAndRemove({ device_id }); //remove device
-    device = await User.findByIdAndUpdate(
-      //delete device from user
+    res.json({ message: STRINGS.TEXTS.userLogout });
+  } catch (error) {
+    console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+//create asset
+
+exports.createAsset = async (req, res) => {
+  try {
+    let userId = req.user.id;
+    let body = req.body; //req.body
+
+    if (req.file) {
+      body.image = req.file.path;
+    }
+    body.userId = userId;
+    let newAsset = await Asset.create(body); //create new Ad
+    await User.findOneAndUpdate(
+      //update user
       {
         _id: userId,
       },
       {
-        $pull: {
-          Devices: device._id,
+        $push: {
+          Assets: newAsset._id,
         },
       },
       {
         new: true,
       }
     );
-
-    res.json({ message: STRINGS.TEXTS.userLogout });
+    res.json({ message: STRINGS.TEXTS.AssetCreated, newAsset });
   } catch (error) {
     console.log("Error--->", error);
+
+    res.status(500).json({ message: error.message });
+  }
+};
+//create media
+
+exports.createMedia = async (req, res) => {
+  try {
+    let userId = req.user.id;
+    let body = req.body; //req.body
+    if (req.file) {
+      body.image = req.file.path;
+    }
+    body.userId = userId;
+    let newMedia = await Media.create(body); //create new Ad
+    await User.findOneAndUpdate(
+      //update user
+      {
+        _id: userId,
+      },
+      {
+        $push: {
+          Media: newMedia._id,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+    res.json({ message: STRINGS.TEXTS.MediaCreated, newMedia });
+  } catch (error) {
+    console.log("Error--->", error);
+
+    res.status(500).json({ message: error.message });
+  }
+};
+//create effects
+exports.createEffect = async (req, res) => {
+  try {
+    let userId = req.user.id;
+    let body = req.body; //req.body
+    if (req.file) {
+      body.image = req.file.path;
+    }
+
+    let newMedia = await Effect.create(body); //create new Ad
+    await User.findOneAndUpdate(
+      //update user
+      {
+        _id: userId,
+      },
+      {
+        $push: {
+          Media: newMedia._id,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+    res.json({ message: STRINGS.TEXTS.MediaCreated, newMedia });
+  } catch (error) {
+    console.log("Error--->", error);
+
     res.status(500).json({ message: error.message });
   }
 };

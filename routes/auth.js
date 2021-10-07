@@ -14,6 +14,12 @@ const {
   getallUsers,
   validateToken,
   uploadImage,
+  createAsset,
+  createMedia,
+  createEffect,
+  getAllAssetsByUser,
+  getAllMediaByUser,
+  getAllEffects,
 } = require("../controllers/auth.js");
 const {
   registerUserValidator,
@@ -26,7 +32,7 @@ const {
   logoutValidator,
 } = require("../middleware/validators");
 const auth = require("../middleware/auth");
-const { upload } = require("../middleware/multer.js");
+const upload = require("../middleware/multer.js");
 
 // Routes
 // register user
@@ -39,6 +45,34 @@ router.get("/verify/:token", verifyEmail);
 router.post("/forgot", forgotPasswordValidator, isValidated, forgotPassword);
 // validate reset token
 router.post("/validate/:token", validateToken);
+// create asset
+router.post(
+  "/createAsset",
+  auth(),
+  upload("/Asset", "image", "single"),
+  createAsset
+);
+
+// create media
+router.post(
+  "/createMedia",
+  auth(),
+  upload("Media", "image", "single"),
+  createMedia
+);
+// create effects
+router.post(
+  "/createEffect",
+  auth(),
+  upload("Effects", "image", "single"),
+  createEffect
+);
+// get all assets by user
+router.get("/getAllAssets", auth(), getAllAssetsByUser);
+// get all media by user
+router.get("/getAllMedia", auth(), getAllMediaByUser);
+// get all effects
+router.get("/getAllEffects", auth(), getAllEffects);
 //set new password
 router.post(
   "/setPasssword",
@@ -71,15 +105,10 @@ router.get("/", auth(), getallUsers);
 // get All devices By User
 router.get("/device/getAll", auth(), getAllDevicesByUser);
 //upload image
-router.post(
-  "/upload",
-  upload.single("image"),
-
-  uploadImage
-);
+router.post("/upload", upload("/", "image", "single"), uploadImage);
 
 // login user
-router.post("/logout", logoutValidator, isValidated, Logout);
+router.post("/logout", auth(), logoutValidator, isValidated, Logout);
 
 // Export
 module.exports = router;

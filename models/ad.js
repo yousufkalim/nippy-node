@@ -13,6 +13,11 @@ const AdSchema = new Schema({
   addText: Object,
   effects: Object,
   media: Object,
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

@@ -20,6 +20,9 @@ module.exports = {
     allUsers: "All Users",
     userCreated: "User Created",
     AdCreated: "Ad Created Successfully",
+    AssetCreated: "Asset Created Successfully",
+    MediaCreated: "Media Created Successfully",
+
     AdUpdated: "Ad Updated Successfully",
     AdDeleted: "Ad Deleted Successfully",
     tokenValidated: "Token Validated Successfully",
@@ -45,6 +48,9 @@ module.exports = {
     USER: "User",
     DEVICE: "Device",
     AD: "Ad",
+    ASSET: "Asset",
+    MEDIA: "Media",
+    EFFECT: "Effect",
   },
 };
 

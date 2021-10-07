@@ -49,7 +49,6 @@ exports.forgotPasswordValidator = [
 // logout password Validation
 exports.logoutValidator = [
   check("device_id", "Device Id is required.").notEmpty(),
-  check("user_id", "Device Id is required.").notEmpty(),
 ];
 // update profile Validation
 exports.updateProfileValidator = [
