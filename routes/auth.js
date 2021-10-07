@@ -108,7 +108,7 @@ router.get("/device/getAll", auth(), getAllDevicesByUser);
 router.post("/upload", upload("/", "image", "single"), uploadImage);
 
 // login user
-router.post("/logout", auth(), logoutValidator, isValidated, Logout);
+router.post("/logout", logoutValidator, isValidated, Logout);
 
 // Export
 module.exports = router;
