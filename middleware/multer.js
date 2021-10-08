@@ -52,6 +52,8 @@ const uploader = (folder) =>
       "image/png",
       "image/jpg",
       "image/jpeg",
+      "image/gif",
+      "video/mp4",
       "application/pdf",
       "application/octet-stream",
     ]),

@@ -49,7 +49,7 @@ router.post("/validate/:token", validateToken);
 router.post(
   "/createAsset",
   auth(),
-  upload("/Asset", "image", "single"),
+  upload("Assets", "image", "single"),
   createAsset
 );
 
@@ -105,7 +105,7 @@ router.get("/", auth(), getallUsers);
 // get All devices By User
 router.get("/device/getAll", auth(), getAllDevicesByUser);
 //upload image
-router.post("/upload", upload("/", "image", "single"), uploadImage);
+router.post("/upload", upload("Others", "image", "single"), uploadImage);
 
 // login user
 router.post("/logout", logoutValidator, isValidated, Logout);
