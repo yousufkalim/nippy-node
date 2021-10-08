@@ -18,6 +18,10 @@ const assetSchema = new Schema({
     ref: "User",
     required: false,
   },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 module.exports = mongoose.model(STRINGS.MODALS.ASSET, assetSchema);
