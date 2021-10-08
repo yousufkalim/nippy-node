@@ -2,26 +2,27 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const STRINGS = require("../utils/texts");
 
-const assetSchema = new Schema({
-  screenName: {
-    type: String,
+const assetSchema = new Schema(
+  {
+    screenName: {
+      type: String,
+    },
+    image: {
+      type: String,
+    },
+    name: {
+      type: String,
+    },
+    data: Object,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
   },
-  image: {
-    type: String,
-  },
-  name: {
-    type: String,
-  },
-  data: Object,
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: false,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
 module.exports = mongoose.model(STRINGS.MODALS.ASSET, assetSchema);
