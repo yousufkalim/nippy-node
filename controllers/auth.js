@@ -469,8 +469,10 @@ exports.getTranslation = async (req, res) => {
   try {
     let { text, language } = req.body; //req.body
     googleTranslate.translate(text, language, function (err, translation) {
-      let convertedText = translation.translatedText;
-      if (!err) {
+      if (err) {
+        return res.status(403).json({ message: err });
+      } else {
+        let convertedText = translation.translatedText;
         return res.json({ text: convertedText });
       }
     });
