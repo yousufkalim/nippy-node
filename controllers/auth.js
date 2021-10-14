@@ -7,7 +7,8 @@ const Device = require("../models/device");
 const Asset = require("../models/asset");
 const Media = require("../models/media");
 const Effect = require("../models/effect");
-
+var api = "GOOGLE_API_KEY_REDACTED";
+var googleTranslate = require("google-translate")(api);
 const MailService = require("../services/mail.service");
 const ENV = process.env;
 
@@ -449,6 +450,7 @@ exports.createEffect = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+//upload image and get path
 exports.uploadImage = async (req, res) => {
   try {
     let uploadedPicture;
@@ -458,6 +460,24 @@ exports.uploadImage = async (req, res) => {
     return res.json({ image: uploadedPicture });
   } catch (error) {
     console.log("Error--->", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+// get text translation
+
+exports.getTranslation = async (req, res) => {
+  try {
+    let { text, language } = req.body; //req.body
+    googleTranslate.translate(text, language, function (err, translation) {
+      if (err) {
+        return res.status(403).json({ message: err });
+      } else {
+        let convertedText = translation.translatedText;
+        return res.json({ text: convertedText });
+      }
+    });
+  } catch (error) {
+    console.log("Error--->", error.message);
     res.status(500).json({ message: error.message });
   }
 };

@@ -24,6 +24,7 @@
     "express": "^4.17.1",
     "express-validator": "^6.12.1",
     "fs": "^0.0.1-security",
+    "google-translate": "^3.0.0",
     "handlebars": "^4.7.7",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.13.4",
