@@ -20,6 +20,7 @@ const {
   getAllAssetsByUser,
   getAllMediaByUser,
   getAllEffects,
+  getTranslation,
 } = require("../controllers/auth.js");
 const {
   registerUserValidator,
@@ -73,6 +74,8 @@ router.get("/getAllAssets", auth(), getAllAssetsByUser);
 router.get("/getAllMedia", auth(), getAllMediaByUser);
 // get all effects
 router.get("/getAllEffects", auth(), getAllEffects);
+// get text translation
+router.post("/translate", getTranslation);
 //set new password
 router.post(
   "/setPasssword",
