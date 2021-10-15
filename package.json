@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "deploy": "sudo chmod 644 .git/index && git pull origin main && npm install && sudo pm2 restart 7"
   },
   "repository": {
     "type": "git",
